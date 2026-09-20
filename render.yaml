@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: resolveai-fraud-sandbox
+    env: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: RESOLVEAI_DEMO_MODE
+        value: "true"  # set to "false" and add RESOLVEAI_WEBHOOK_SECRET before real use
