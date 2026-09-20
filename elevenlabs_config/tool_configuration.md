@@ -109,6 +109,29 @@ only on the case bound to this call at verification time.
 
 ---
 
+## Tool 6 — customer_opts_out
+
+| Field | Value |
+|---|---|
+| Name | `customer_opts_out` |
+| Description | Call the moment the customer declines to continue with an AI, or asks for a human — at any point in the call, verified or not. Do not gate this behind verification. Ends the automated portion of the call and connects them to a person. |
+| Method | POST |
+| URL | `https://<your-deployed-host>/tools/customer_opts_out` |
+
+| Data Type | Identifier | Value type | Description |
+|---|---|---|---|
+| string | call_id | Dynamic variable → `system__conversation_id` | Current conversation ID |
+| string | incident_id | Dynamic variable → your custom `incident_id` set at outbound-call time | Same dynamic variable as Tool 1 — never LLM Prompt. Works even if verification never happened. |
+| string | reason_code | LLM Prompt | Short reason, e.g. CUSTOMER_REQUESTS_HUMAN, CUSTOMER_DECLINES_AI |
+
+This is the one tool available before verification succeeds — every
+other tool except `verify_customer` itself requires it first. The
+backend also records a persistent do-not-call flag against the
+customer this incident belongs to, so a future fraud case for them is
+routed to a human channel instead of another AI call — see `fraud_events.py:record_opt_out`.
+
+---
+
 ## Authentication (QA finding #4 — now implemented, not just noted)
 
 `server.py` supports two modes via `RESOLVEAI_DEMO_MODE`:
