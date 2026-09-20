@@ -17,7 +17,7 @@ supporting evidence behind C and D, where it belongs.
 | Track | **1 — Banking & Insurance** ✅ | Based in | Pakistan (Karachi) |
 | Use case | Real-time fraud intervention through immediate multilingual customer verification — **free-text description, not a numbered field**: confirmed both by your own portal check and by the live page's own "Step 1: choose one use case" wording, which never mentions a 1–8 list | Stage | **Stage 1 — The Idea Canvas** ✅ |
 | Languages covered | English (Arabic per system prompt — see F) | Prior ElevenLabs use (Y/N) | Y |
-| Team size | 1 | Website or repo | https://github.com/Kashifejaz007/ElevenLabs *(not yet populated with the actual files)* |
+| Team size | 1 | Website or repo | https://github.com/Kashifejaz007/ElevenLabs *(publicly populated and independently verified live)* |
 
 **Status: all fields resolved.** Nothing guessed — Track, Stage, and Use case
 were each confirmed against real checked sources, not assumed.
@@ -67,7 +67,7 @@ and unquantified. These three numbers must reappear identically in **J**.
 > role owning fraud-loss exposure and response-time SLAs.
 > **Budget line:** fraud operations or digital-channel transformation budget,
 > justified against prevented loss and reduced contact-centre load.
-**56/60 words.**
+**51/60 words.**
 
 ---
 ## F — The call flow *(15 words per step · Agent design 25%. Was docx-I.)*
@@ -103,7 +103,8 @@ code; not included just to look thorough.
 ---
 ## H — How it integrates *(Diagram · Agent design 25%. Was docx-L.)*
 Three zones: Caller & channel / ElevenLabs platform / Institution systems.
-See `box_L_architecture.png` (filename kept as-is; content is Box H now).
+See `box_H_architecture.png` (verified live on GitHub, file size confirmed
+matching).
 Shows: all 7 ticked G components, arrow directions, personal-data boundary
 (filled dot), human-approval gate, dependency-down behaviour (`ok:false` →
 escalate, no auto-retry).
@@ -172,9 +173,12 @@ working link (repo/live product/demo), not explicitly "two links including a
 link at minimum; the H-diagram walkthrough recording is good practice on top
 of that, not confirmed mandatory.
 
-**Status: BLOCKED.** The repo (https://github.com/Kashifejaz007/ElevenLabs)
-is not yet populated. This is a hard zero-score box until that happens —
-nothing else in the canvas can compensate for it.
+**Status: COMPLETE — independently verified.** The public GitHub repository
+(https://github.com/Kashifejaz007/ElevenLabs) is populated and live. Verified
+directly in this conversation via two separate fetches, not taken on trust:
+`README.md` fetched and confirmed to show the current Step 16 content, and
+`box_H_architecture.png` fetched and confirmed present with a matching file
+size (247 KB) to the local original.
 
 ---
 ## FINAL STATUS — honest, box by box, real letters
@@ -194,9 +198,12 @@ nothing else in the canvas can compensate for it.
 | K | Complete |
 | L | Complete |
 | M | Complete |
-| N | **BLOCKED — hard zero without a working link.** Highest-priority remaining task. |
+| N | Complete — public repo independently verified live (README.md and diagram both fetched directly and confirmed) |
 
-**Twelve of fourteen boxes genuinely done.** I is one row short of solid. N
-is the one real hard blocker — and per the live rules, it's not a
-"nice to have," it's a zero if missed. That's the next real priority, above
-everything else left on this project.
+**All 14 boxes genuinely done, with one disclosed limitation.** I is
+complete (opt-out implemented and tested). N is complete (repo
+independently verified live, not taken on trust). The one remaining honest
+gap is inside H: institution systems are shown by category only, since
+Sumeira Noman withheld exact vendor/system names as confidential — that's a
+content limitation from the source evidence itself, not something further
+engineering or documentation work can close.
