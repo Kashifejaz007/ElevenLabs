@@ -31,6 +31,7 @@ class CallState:
     disputed: bool = False
     language: str = "en"
     escalated: bool = False
+    opted_out: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -120,3 +121,27 @@ def check_no_dual_authorization_required(case: dict) -> None:
             "G7_DUAL_AUTH_REQUIRED",
             "Transaction value requires human authorization; agent cannot freeze unilaterally.",
         )
+
+
+# ---------------------------------------------------------------------------
+# Guardrail 8 — Opt-out path (Box K row 5)
+# FIXED (Step 16): this was a genuine, disclosed gap — no mechanism
+# existed at all. Two layers, both real:
+#   1. In-call: tools.customer_opts_out is available to the agent at
+#      ANY point in the call, verified or not, and immediately
+#      escalates — it does not require passing through verification
+#      first, because declining AI interaction has to work even before
+#      the customer has proven who they are.
+#   2. Persistent: opting out marks the customer (not just this call)
+#      via fraud_events.record_opt_out, resolved securely through the
+#      same incident_id binding verify_customer already uses — never
+#      from an agent-supplied identifier. A future create_incident for
+#      that customer returns customer_opted_out: true, so whatever
+#      system places the next outbound call can route to a human
+#      instead. This does not silently drop the fraud case — a
+#      customer declining the AI channel still gets contacted, just
+#      not by this agent.
+# No separate check_* function here: unlike guardrails 3-7, this isn't
+# a precondition that blocks another tool — it's its own action. See
+# tools.customer_opts_out.
+# ---------------------------------------------------------------------------

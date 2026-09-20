@@ -110,7 +110,11 @@ def route_fraud_event():
     # call_id doesn't exist yet in this sandbox until the (simulated)
     # outbound call starts — the frontend/simulator generates one next
     # and binds it via the first verify_customer call.
-    return jsonify({"ok": True, "incident_id": incident["incident_id"]})
+    return jsonify({
+        "ok": True,
+        "incident_id": incident["incident_id"],
+        "customer_opted_out": incident["customer_opted_out"],
+    })
 
 
 # --- ElevenLabs webhook tool endpoints --------------------------------
@@ -160,6 +164,18 @@ def route_escalate():
     return jsonify(result)
 
 
+@app.route("/tools/customer_opts_out", methods=["POST"])
+def route_opt_out():
+    body = request.get_json(force=True)
+    state = _get_state(body["call_id"])
+    result = tools.customer_opts_out(
+        state,
+        incident_id=body["incident_id"],
+        reason_code=body["reason_code"],
+    )
+    return jsonify(result)
+
+
 # --- Read-only / demo-support endpoints --------------------------------
 
 @app.route("/api/audit", methods=["GET"])
@@ -192,6 +208,7 @@ def route_demo_reset():
     their initial state, so judges can replay any scenario repeatedly."""
     reset_mock_data()
     fraud_events.reset_incidents()
+    fraud_events.reset_opt_outs()
     AUDIT_LOG.clear()
     _SESSIONS.clear()
     return jsonify({"ok": True, "reset": True})

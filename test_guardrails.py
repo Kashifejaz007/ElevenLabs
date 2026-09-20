@@ -69,6 +69,7 @@ def verified_state(case_id: str) -> CallState:
 def _reset_all():
     reset_mock_data()
     fraud_events.reset_incidents()
+    fraud_events.reset_opt_outs()
 
 
 # ===========================================================================
@@ -486,3 +487,130 @@ def test_full_flow_case2005_unsupported_path():
     assert info["ok"] and info["supported"] is False
     escalation = tools.escalate_to_human(state, "UNSUPPORTED_FRAUD_TYPE")
     assert escalation["ok"] is True
+
+
+# ===========================================================================
+# GUARDRAIL 8 — Opt-out path (Box K row 5)
+# ===========================================================================
+
+def test_customer_can_opt_out_before_verification():
+    """The whole point: opting out must not require proving identity to
+    the AI the customer just said they don't want to talk to."""
+    _reset_all()
+    incident_id = start_incident("CASE-2001")
+    state = new_state()
+    assert state.verified is False
+
+    result = tools.customer_opts_out(state, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    assert result["ok"] is True
+    assert result["queued"] is True
+    assert state.verified is False, "opting out must not silently verify the caller"
+    assert state.escalated is True
+    assert state.opted_out is True
+
+
+def test_opt_out_records_persistent_flag_for_the_correct_customer():
+    _reset_all()
+    incident_id = start_incident("CASE-2001")  # CUS-DEMO-1001
+    state = new_state()
+    result = tools.customer_opts_out(state, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    assert result["persistent_opt_out_recorded"] is True
+    assert fraud_events.is_customer_opted_out("CUS-DEMO-1001") is True
+    # a different customer must be unaffected
+    assert fraud_events.is_customer_opted_out("CUS-DEMO-1002") is False
+
+
+def test_future_incident_for_opted_out_customer_is_flagged_not_blocked():
+    """Opting out must not silently drop a real fraud case — it should
+    flag it for human routing, and creating the incident must still
+    succeed."""
+    _reset_all()
+    incident_id = start_incident("CASE-2001")
+    state = new_state()
+    tools.customer_opts_out(state, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    new_incident = fraud_events.create_incident("CASE-2001")
+    assert new_incident["customer_opted_out"] is True
+    assert new_incident["incident_id"], "incident creation must still succeed, not be blocked"
+
+    # an unrelated case's customer is unaffected
+    unrelated_incident = fraud_events.create_incident("CASE-2002")
+    assert unrelated_incident["customer_opted_out"] is False
+
+
+def test_opt_out_after_verification_also_persists():
+    """Opting out should also work mid-call, after the customer has
+    already been verified — not just as a pre-verification path."""
+    _reset_all()
+    state = verified_state("CASE-2001")
+    incident_id = start_incident("CASE-2001")  # a second incident, same customer
+    # bind this new incident to the SAME call to simulate the customer
+    # opting out partway through an already-verified conversation
+    result = tools.customer_opts_out(state, incident_id, "CUSTOMER_DECLINES_CONTINUING")
+    assert result["ok"] is True
+    assert fraud_events.is_customer_opted_out("CUS-DEMO-1001") is True
+
+
+def test_opt_out_with_expired_or_unknown_incident_still_escalates_the_call():
+    """Adversarial case: if incident binding fails for any reason, the
+    call must still be escalated immediately — only the persistent flag
+    is allowed to be skipped, never the in-call handoff itself."""
+    _reset_all()
+    state = new_state()
+    result = tools.customer_opts_out(state, "INC-does-not-exist", "CUSTOMER_REQUESTS_HUMAN")
+
+    assert result["ok"] is True
+    assert result["queued"] is True
+    assert result["persistent_opt_out_recorded"] is False
+    assert state.escalated is True
+    assert state.opted_out is True
+
+
+def test_opt_out_cannot_be_used_to_hijack_a_different_customers_incident():
+    """Adversarial case: the same hijack protection verify_customer gets
+    from fraud_events must also protect customer_opts_out — a second
+    call cannot claim an incident another call already bound."""
+    _reset_all()
+    incident_id = start_incident("CASE-2001")
+    call_a = new_state()
+    tools.customer_opts_out(call_a, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    call_b = new_state()
+    result = tools.customer_opts_out(call_b, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    assert result["persistent_opt_out_recorded"] is False, (
+        "a second, different call must not be able to piggyback on an "
+        "incident already bound to the first call"
+    )
+    assert call_b.escalated is True, "the second call must still be escalated on its own terms"
+
+
+def test_opt_out_is_idempotent_on_the_registry():
+    _reset_all()
+    incident_id = start_incident("CASE-2001")
+    state = new_state()
+    tools.customer_opts_out(state, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+    before = len(fraud_events._OPTED_OUT_CUSTOMERS)
+
+    # simulate calling it again (e.g. a retried tool call)
+    fraud_events.record_opt_out("CUS-DEMO-1001")
+    after = len(fraud_events._OPTED_OUT_CUSTOMERS)
+
+    assert before == after == 1
+
+
+def test_opt_out_audit_trail_distinguishes_recorded_vs_escalated_only():
+    _reset_all()
+    incident_id = start_incident("CASE-2001")
+    state = new_state()
+    tools.customer_opts_out(state, incident_id, "CUSTOMER_REQUESTS_HUMAN")
+
+    entries = [
+        e for e in AUDIT_LOG
+        if e["tool"] == "customer_opts_out" and e["call_id"] == state.call_id
+    ]
+    assert len(entries) == 1
+    assert entries[0]["outcome"] == "SUCCESS"
+    assert "persistent opt-out recorded" in entries[0]["detail"]

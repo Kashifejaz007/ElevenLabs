@@ -51,10 +51,17 @@ def create_incident(case_id: str) -> dict:
     known case_id here as the sandbox stand-in for a real fraud-signal
     payload; in production this would receive fraud-detection data and
     resolve/create the case itself. Returns an unguessable incident_id
-    — this is the ONLY thing that ever reaches the eventual voice call."""
+    — this is the ONLY thing that ever reaches the eventual voice call.
+
+    Also surfaces whether this case's customer has previously opted out
+    of AI-handled contact (see the opt-out registry below). This does
+    NOT block incident creation — a fraud case still needs handling —
+    it's a signal for whatever system places the outbound call to route
+    to a human channel instead of an AI voice agent for this customer."""
     if case_id not in FRAUD_CASES:
         raise ValueError(f"Unknown case_id: {case_id}")
 
+    customer_id = FRAUD_CASES[case_id]["customer_id"]
     incident_id = "INC-" + uuid.uuid4().hex[:16]
     _INCIDENTS[incident_id] = {
         "incident_id": incident_id,
@@ -62,7 +69,9 @@ def create_incident(case_id: str) -> dict:
         "created_at": _now(),
         "call_id": None,  # bound once the outbound call actually starts
     }
-    return dict(_INCIDENTS[incident_id])
+    result = dict(_INCIDENTS[incident_id])
+    result["customer_opted_out"] = is_customer_opted_out(customer_id)
+    return result
 
 
 def _is_expired(incident: dict) -> bool:
@@ -102,3 +111,36 @@ def get_case_id_for_call(call_id: str) -> str | None:
 
 def reset_incidents() -> None:
     _INCIDENTS.clear()
+
+
+# ---------------------------------------------------------------------------
+# Opt-out registry (Box K row 5 — the gap identified in Step 12's audit).
+#
+# Two distinct things, deliberately kept separate:
+#   1. In-call: the customer can ask for a human / decline AI at any
+#      point, verified or not — handled by tools.customer_opts_out,
+#      which escalates THIS call immediately, same as any other
+#      escalation trigger.
+#   2. Persistent: opting out also marks the CUSTOMER (not just the
+#      call) so a future fraud incident for them is flagged before any
+#      new outbound AI call is placed. This registry is keyed by
+#      customer_id, resolved the same secure way case_id already is —
+#      via bind_call_to_incident — never by an agent-supplied customer
+#      identifier. It does NOT block a future incident from being
+#      created: a customer declining the AI channel still needs their
+#      fraud case handled, just by a human, not silently dropped.
+# ---------------------------------------------------------------------------
+
+_OPTED_OUT_CUSTOMERS: set[str] = set()
+
+
+def record_opt_out(customer_id: str) -> None:
+    _OPTED_OUT_CUSTOMERS.add(customer_id)
+
+
+def is_customer_opted_out(customer_id: str) -> bool:
+    return customer_id in _OPTED_OUT_CUSTOMERS
+
+
+def reset_opt_outs() -> None:
+    _OPTED_OUT_CUSTOMERS.clear()

@@ -191,3 +191,41 @@ def escalate_to_human(state: CallState, reason_code: str) -> dict:
     state.escalated = True
     _audit(state.call_id, "escalate_to_human", "SUCCESS", reason_code)
     return {"ok": True, "queued": True, "reason_code": reason_code}
+
+
+def customer_opts_out(state: CallState, incident_id: str, reason_code: str) -> dict:
+    """Box K row 5 — opt-out path. Available at ANY point in the call,
+    before or after verification: a customer declining to speak with an
+    AI, or explicitly asking for a human, must not be gated behind
+    proving their identity to an AI they've just said they don't want
+    to talk to.
+
+    Takes `incident_id` — the same server-issued, unguessable, never-
+    agent-chosen token verify_customer resolves case_id from — so the
+    persistent opt-out can be tied to the correct real customer without
+    ever trusting an agent-supplied identifier. If binding fails (e.g.
+    incident already expired, or already bound to a different call),
+    the call is still escalated immediately; only the PERSISTENT
+    do-not-call flag is skipped, since there's no securely-resolved
+    customer to attach it to. In-call escalation is not degraded by a
+    binding failure — the customer still gets a human right now either
+    way.
+
+    Idempotent in effect: calling this twice (or after verification, or
+    combined with a later escalate_to_human) never double-records the
+    opt-out — record_opt_out on a set is a no-op if already present.
+    """
+    state.escalated = True
+    state.opted_out = True
+
+    bind_result = fraud_events.bind_call_to_incident(incident_id, state.call_id)
+    if not bind_result["ok"]:
+        _audit(state.call_id, "customer_opts_out", "ESCALATED_ONLY",
+               f"Call escalated; persistent opt-out not recorded — incident binding failed: {bind_result['reason']}")
+        return {"ok": True, "queued": True, "reason_code": reason_code, "persistent_opt_out_recorded": False}
+
+    case_id = bind_result["case_id"]
+    customer_id = FRAUD_CASES[case_id]["customer_id"]
+    fraud_events.record_opt_out(customer_id)
+    _audit(state.call_id, "customer_opts_out", "SUCCESS", f"{reason_code} — persistent opt-out recorded for {customer_id}")
+    return {"ok": True, "queued": True, "reason_code": reason_code, "persistent_opt_out_recorded": True}

@@ -119,6 +119,39 @@ before every tool executes:**
 | 5 | Unsupported fraud-type fallback | No approved policy → escalate, not improvise |
 | 6 | Full auditability | Every call, success or denial, logs to `guardrails.AUDIT_LOG` |
 | 7 | **High-value human authorization gate** | Above a value threshold, agent unconditionally blocked from freezing — escalated to a human queue, not a completed two-signer workflow |
+| 8 | **Opt-out path** *(fixed Step 16 — see Section 3b)* | `customer_opts_out` works before OR after verification; escalates the call immediately and, when the incident can be securely bound, persistently flags the customer via `fraud_events.record_opt_out` — a future incident for them returns `customer_opted_out: true` rather than routing to another AI call |
+
+## 3b. Opt-out path (Step 16 fix — was a genuine, disclosed gap)
+
+An external audit during canvas preparation found Guardrail Box K row 5
+("opt-out path") had no implementation at all — hanging up ended a
+call, but there was no way for a customer to decline AI interaction
+mid-call and reach a human without it looking like just another
+verification failure, and no persistent record that a customer had
+opted out at all.
+
+Fixed with two separate mechanisms, deliberately kept apart:
+
+- **In-call (`tools.customer_opts_out`):** callable from every
+  pre-terminal workflow node (see `agent_workflow_spec.md` Node 7),
+  before OR after verification. A customer should not have to prove
+  their identity to the AI they've just said they don't want to talk
+  to. Escalates the call immediately either way.
+- **Persistent (`fraud_events.record_opt_out` / `is_customer_opted_out`):**
+  resolved securely through the same `incident_id` binding
+  `verify_customer` already uses — never from an agent-supplied
+  identifier, so it can't be spoofed the same way the original
+  case_id-hijack gap could have been. A future `create_incident` for
+  that customer returns `customer_opted_out: true`. This does **not**
+  block the incident — a customer declining the AI channel still has a
+  real fraud case that needs handling, just by a human, not silently
+  dropped.
+
+8 new tests cover both layers plus two adversarial cases: opting out
+with an expired/unknown incident (must still escalate the call, just
+skip the persistent flag), and attempting to piggyback a second call on
+an incident already bound to a different one (must be rejected, same
+hijack protection `verify_customer` gets).
 
 ## 4. Demo mode vs. production mode — the honest split (findings #4 + #5)
 
