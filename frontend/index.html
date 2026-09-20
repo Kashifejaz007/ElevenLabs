@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ResolveAI — Proactive Voice Fraud Intervention</title>
+<style>
+  :root {
+    --bg: #0a0e14;
+    --bg-panel: #111826;
+    --bg-panel-2: #161f30;
+    --border: #232f42;
+    --text: #e6ebf2;
+    --text-dim: #8b98ab;
+    --accent: #4f8cff;
+    --accent-dim: #2a4a8a;
+    --good: #34c78e;
+    --bad: #ff5c6c;
+    --warn: #f5a623;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+  }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  .logo span { color: var(--accent); }
+  nav a { color: var(--text-dim); text-decoration: none; margin-left: 24px; font-size: 14px; }
+  nav a:hover { color: var(--text); }
+
+  .hero { padding: 72px 0 48px; text-align: left; }
+  .hero h1 {
+    font-size: 44px;
+    line-height: 1.1;
+    margin: 0 0 18px;
+    max-width: 640px;
+    letter-spacing: -0.02em;
+  }
+  .hero p { color: var(--text-dim); font-size: 17px; max-width: 560px; margin: 0 0 28px; }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #3d7ae8; }
+  .btn-secondary { background: transparent; border-color: var(--border); color: var(--text); }
+  .btn-secondary:hover { border-color: var(--accent); }
+  .btn-danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .badge.on { border-color: var(--good); color: var(--good); background: rgba(52,199,142,0.08); }
+  .badge.off-bad { border-color: var(--bad); color: var(--bad); background: rgba(255,92,108,0.08); }
+
+  section { padding: 48px 0; border-top: 1px solid var(--border); }
+  h2 { font-size: 24px; margin: 0 0 8px; }
+  .section-sub { color: var(--text-dim); font-size: 14px; margin: 0 0 28px; max-width: 620px; }
+
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .demo-grid { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .panel h3 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin: 0 0 14px;
+  }
+
+  .scenario-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .scenario-btn {
+    text-align: left;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .scenario-btn:hover { border-color: var(--accent); }
+  .scenario-btn.active { border-color: var(--accent); background: rgba(79,140,255,0.08); }
+  .scenario-btn .tag { display: block; color: var(--text-dim); font-size: 11px; margin-top: 3px; font-family: var(--mono); }
+
+  .phone-box {
+    background: var(--bg-panel-2);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+  .phone-box .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .phone-box .code { font-size: 22px; letter-spacing: 0.15em; color: var(--warn); }
+  .phone-box .note { color: var(--text-dim); font-size: 11px; margin-top: 8px; }
+
+  input[type=text] {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+
+  .log {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #060a10;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    height: 340px;
+    overflow-y: auto;
+  }
+  .log .line { margin-bottom: 6px; }
+  .log .t { color: var(--text-dim); }
+  .log .sys { color: var(--accent); }
+  .log .ok { color: var(--good); }
+  .log .block { color: var(--bad); }
+  .log .agent { color: #c9a0ff; }
+  .log .customer { color: #ffd479; }
+
+  .arch-diagram {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.9;
+    color: var(--text-dim);
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .arch-diagram .hl { color: var(--accent); font-weight: 700; }
+
+  .principle-box {
+    margin-top: 20px;
+    padding: 16px 20px;
+    border-left: 3px solid var(--accent);
+    background: rgba(79,140,255,0.06);
+    font-size: 15px;
+  }
+  .principle-box b { color: var(--accent); }
+
+  .why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+  @media (max-width: 800px) { .why-grid { grid-template-columns: 1fr; } }
+  .why-item h4 { font-size: 14px; margin: 0 0 6px; }
+  .why-item p { font-size: 13px; color: var(--text-dim); margin: 0; }
+
+  .disclaimer {
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 20px;
+  }
+
+  footer { padding: 32px 0; color: var(--text-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">Resolve<span>AI</span></div>
+    <nav>
+      <a href="#demo">Live Demo</a>
+      <a href="#architecture">Security Architecture</a>
+      <a href="#why">Why It's Designed This Way</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero wrap">
+  <h1>Stop Fraud Before the Money Moves.</h1>
+  <p>ResolveAI proactively calls customers when a card compromise is detected,
+     verifies the interaction without asking for a PIN, and can trigger an
+     institution-approved card freeze — only through deterministic backend
+     safeguards, never on the model's word alone.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="#demo">Run Live Demo</a>
+    <a class="btn btn-secondary" href="#architecture">View Security Architecture</a>
+  </div>
+  <div class="badge-row" id="hero-badges">
+    <span class="badge">VERIFIED</span>
+    <span class="badge">PIN NEVER REQUESTED</span>
+    <span class="badge">HIGH-VALUE HUMAN AUTHORIZATION REQUIRED</span>
+    <span class="badge">CARD FROZEN</span>
+    <span class="badge">TRANSACTION BLOCKED</span>
+    <span class="badge">AUDIT RECORDED</span>
+  </div>
+</div>
+
+<section id="demo">
+  <div class="wrap">
+    <h2>Live Demo</h2>
+    <p class="section-sub">
+      This is not a scripted animation — every button below calls the real
+      backend (<code>/tools/*</code>). Card and transaction state actually
+      change. Reset any time to replay.
+    </p>
+
+    <div class="disclaimer" style="margin-bottom:20px;">
+      <b>⚠ Simulated conversation, real backend.</b> The agent/customer lines
+      below are scripted for this demo page — they stand in for what an
+      actual ElevenLabs voice call would say. There is no live phone call
+      happening here. What IS real: every backend call this page makes
+      (<code>/api/fraud/events</code>, <code>/tools/*</code>), the state
+      changes it produces, and the audit trail. A real deployment replaces
+      these scripted lines with an actual ElevenLabs agent speaking to a
+      real customer, calling the exact same endpoints.
+    </div>
+
+    <div class="badge-row" style="margin-bottom:20px;">
+      <span class="badge on">PIN: NEVER REQUESTED</span>
+      <span class="badge on">CVV: NEVER REQUESTED</span>
+      <span class="badge on">PASSWORD: NEVER REQUESTED</span>
+      <span class="badge">LLM: CAN REQUEST</span>
+      <span class="badge on">BACKEND: DECIDES</span>
+    </div>
+
+    <div class="demo-grid">
+      <div class="panel">
+        <h3>1 · Choose a scenario (simulates the bank's fraud system flagging this case)</h3>
+        <div class="scenario-list" id="scenario-list">
+          <div style="color:var(--text-dim); font-size:13px;">Loading scenarios…</div>
+        </div>
+
+        <h3 style="margin-top:20px;">2 · Verification code (sent to the customer's phone, never to the agent)</h3>
+        <div class="phone-box" id="phone-box">
+          <div class="label">Simulated SMS to customer — DEMO MODE only</div>
+          <div class="code" id="phone-code">— select a scenario —</div>
+          <div class="note">DEMO MODE shows this so a judge can read it back
+            without a real phone. In PRODUCTION MODE the code would be sent
+            only to the customer's registered channel and never appear in
+            any frontend, page source, or API response — see "Why It's
+            Designed This Way" below for the full demo/production
+            distinction. No tool available to the agent can retrieve this
+            value either way — see <code>tools.py</code>.</div>
+        </div>
+
+        <h3>3 · Run the call</h3>
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-verify" disabled>Verify customer</button>
+          <button class="btn btn-secondary" id="btn-getcase" disabled>Explain flagged activity</button>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" id="btn-confirm-fraud" disabled>Customer: "That wasn't me"</button>
+          <button class="btn btn-secondary" id="btn-dispute" disabled>Customer: "That was me"</button>
+        </div>
+        <div class="action-row" style="margin-top:8px;">
+          <button class="btn btn-danger" id="btn-reset">Reset demo</button>
+        </div>
+
+        <div class="badge-row" id="state-badges" style="margin-top:16px;"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Call log &amp; backend responses</h3>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="architecture">
+  <div class="wrap">
+    <h2>Security Architecture</h2>
+    <p class="section-sub">The trust boundary that matters most in this system.</p>
+
+    <div class="arch-diagram">CUSTOMER
+   │
+   ▼
+VOICE / TELEPHONY
+   │
+   ▼
+<span class="hl">ELEVENLABS AGENT</span>  (conversation, language, intent — nothing security-critical)
+   │
+   ▼
+ELEVENLABS WORKFLOW
+   │
+   ▼
+SECURE WEBHOOK
+   │
+   ▼
+<span class="hl">RESOLVEAI POLICY / GUARDRAIL ENGINE</span>  (this is the trust boundary)
+   │
+   ▼
+BANKING SANDBOX API  (freeze, transaction state)
+   │
+   ▼
+AUDIT STORE</div>
+
+    <div class="principle-box">
+      <b>LLM DOES NOT CONTROL SECURITY DECISIONS.</b><br>
+      <b>BACKEND POLICY ENGINE IS AUTHORITATIVE.</b><br><br>
+      The model can request. The backend decides. Verification is a
+      server-side code comparison, never an agent-asserted boolean. Card
+      freezes above a value threshold require human authorization —
+      full customer confirmation is not enough on its own.
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <h2>Why It's Designed This Way</h2>
+    <div class="why-grid">
+      <div class="why-item">
+        <h4>Why no PIN?</h4>
+        <p>A PIN is the one thing a real bank never asks for over an unsolicited
+           call. Requesting one is itself a fraud pattern — so this agent never has
+           a tool capable of collecting, checking, or storing one.</p>
+      </div>
+      <div class="why-item">
+        <h4>Why backend verification?</h4>
+        <p>An LLM can be persuaded. A server-side string comparison against a
+           code that never reaches the model cannot be talked out of its
+           answer.</p>
+      </div>
+      <div class="why-item">
+        <h4>Why no approve/transfer tool?</h4>
+        <p>The safest way to guarantee an action never happens is for the
+           function that would perform it to not exist on the tool surface at
+           all.</p>
+      </div>
+      <div class="why-item">
+        <h4>Why a human authorization gate?</h4>
+        <p>Above a value threshold, even a fully confirmed customer call
+           shouldn't authorize an action alone — that mirrors real four-eyes
+           banking controls.</p>
+      </div>
+      <div class="why-item">
+        <h4>Why idempotent freezing?</h4>
+        <p>A voice call can retry, glitch, or repeat itself. Freezing twice
+           must never behave differently from freezing once.</p>
+      </div>
+      <div class="why-item">
+        <h4>Why audit everything?</h4>
+        <p>Every security-relevant action — allowed or blocked — is logged,
+           so any call can be reconstructed and reviewed after the fact.</p>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      <b>Honesty note:</b> this is a sandboxed proof of concept. Card, customer,
+      and transaction data are entirely fictional. No real banking core system,
+      card network, or financial transaction is connected. What's real: the
+      guardrail logic, the state machine, the audit trail, and every backend
+      call this page makes.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">ResolveAI — Ignyte × ElevenLabs Future of Voice AI Challenge — Banking &amp; Insurance track — sandbox build.</div>
+</footer>
+
+<script>
+const API = ""; // same-origin — Flask serves this file and the API together
+let callId = null;
+let incidentId = null;
+let cases = [];
+let activeCase = null;
+let sessionVerified = false;
+let sessionDisputed = false;
+
+function logLine(cls, text) {
+  const log = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  const div = document.createElement('div');
+  div.className = 'line';
+  div.innerHTML = `<span class="t">[${t}]</span> <span class="${cls}">${text}</span>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function timelineEvent(text) {
+  logLine('sys', `<b>${text}</b>`);
+}
+
+function newCallId() {
+  return 'call-' + Math.random().toString(36).slice(2, 10);
+}
+
+async function loadScenarios() {
+  const res = await fetch(API + '/api/cases');
+  cases = await res.json();
+  const list = document.getElementById('scenario-list');
+  list.innerHTML = '';
+  cases.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'scenario-btn';
+    btn.dataset.caseId = c.case_id;
+    btn.innerHTML = `${c.case_id} — ${c.fraud_type}
+      <span class="tag">lang: ${c.language} · auth-gate: ${c.requires_dual_authorization} · supported: ${c.supported} · card: ${c.card_status}</span>`;
+    btn.onclick = () => selectScenario(c.case_id);
+    list.appendChild(btn);
+  });
+}
+
+const VERIFICATION_CODES = {
+  'CASE-2001': '4471', 'CASE-2002': '8823', 'CASE-2003': '1190',
+  'CASE-2004': '5502', 'CASE-2005': '6634'
+};
+
+async function callTool(path, body) {
+  const res = await fetch(API + path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function selectScenario(caseId) {
+  activeCase = caseId;
+  sessionVerified = false;
+  sessionDisputed = false;
+  document.querySelectorAll('.scenario-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.caseId === caseId);
+  });
+  document.getElementById('btn-verify').disabled = true;
+  document.getElementById('btn-getcase').disabled = true;
+  document.getElementById('btn-confirm-fraud').disabled = true;
+  document.getElementById('btn-dispute').disabled = true;
+  document.getElementById('phone-code').textContent = '…';
+
+  timelineEvent('FRAUD SIGNAL RECEIVED (bank\'s detection system)');
+  const eventResult = await callTool('/api/fraud/events', { case_id: caseId });
+  if (!eventResult.ok) {
+    logLine('block', 'Failed to create incident: ' + JSON.stringify(eventResult));
+    return;
+  }
+  incidentId = eventResult.incident_id;
+  timelineEvent(`INCIDENT CREATED — incident_id=${incidentId} (case never exposed to the agent)`);
+
+  callId = newCallId();
+  timelineEvent(`OUTBOUND CALL INITIATED — call_id=${callId}`);
+  timelineEvent('CUSTOMER ANSWERED');
+
+  document.getElementById('phone-code').textContent = VERIFICATION_CODES[caseId];
+  document.getElementById('btn-verify').disabled = false;
+  renderBadges();
+}
+
+async function doVerify() {
+  const code = VERIFICATION_CODES[activeCase];
+  logLine('agent', `"We've sent a verification code to your registered number — could you read that back?"`);
+  logLine('customer', `"Sure, it's ${code}."`);
+  const result = await callTool('/tools/verify_customer', {
+    call_id: callId, incident_id: incidentId, spoken_verification_code: code
+  });
+  logLine(result.ok ? 'ok' : 'block', 'verify_customer -> ' + JSON.stringify(result));
+  if (result.ok) timelineEvent('VERIFICATION PASSED');
+  sessionVerified = result.ok;
+  document.getElementById('btn-getcase').disabled = !result.ok;
+  renderBadges();
+}
+
+async function doGetCase() {
+  const result = await callTool('/tools/get_fraud_case', { call_id: callId });
+  logLine(result.ok ? 'ok' : 'block', 'get_fraud_case -> ' + JSON.stringify(result));
+  if (result.ok) {
+    logLine('agent', `"We flagged ${result.transaction_amount} ${result.transaction_currency} at ${result.transaction_merchant} on card ${result.masked_card}. Did you make this purchase?"`);
+    document.getElementById('btn-confirm-fraud').disabled = false;
+    document.getElementById('btn-dispute').disabled = false;
+  }
+}
+
+async function doConfirmFraud() {
+  logLine('customer', `"No, that wasn't me."`);
+  const result = await callTool('/tools/confirm_fraud_and_freeze', {
+    call_id: callId, customer_confirmed: true
+  });
+  logLine(result.ok ? 'ok' : 'block', 'confirm_fraud_and_freeze -> ' + JSON.stringify(result));
+  if (result.ok && !result.already_frozen) {
+    timelineEvent('CARD FROZEN');
+    timelineEvent('TRANSACTION BLOCKED');
+    logLine('agent', `"I've frozen your card and blocked that transaction."`);
+    timelineEvent('AUDIT COMPLETE');
+  } else if (result.ok && result.already_frozen) {
+    logLine('agent', `"Your card is already frozen from a previous call — no further action needed."`);
+  } else if (result.reason === 'G7_DUAL_AUTH_REQUIRED') {
+    timelineEvent('HUMAN AUTHORIZATION REQUIRED — FREEZE BLOCKED');
+    logLine('agent', `"This transaction needs an authorized reviewer before I can freeze it — escalating now."`);
+    await callTool('/tools/escalate_to_human', { call_id: callId, reason_code: 'HUMAN_AUTHORIZATION_REQUIRED' });
+    logLine('sys', 'escalate_to_human -> queued for human review');
+    timelineEvent('ESCALATED TO HUMAN');
+  }
+  await refreshScenarios();
+  renderBadges();
+}
+
+async function doDispute() {
+  logLine('customer', `"Yes, actually that was me."`);
+  const result = await callTool('/tools/customer_disputes_fraud', { call_id: callId });
+  logLine(result.ok ? 'ok' : 'block', 'customer_disputes_fraud -> ' + JSON.stringify(result));
+  sessionDisputed = result.ok;
+  if (result.ok) timelineEvent('CUSTOMER DISPUTES FLAG');
+  logLine('agent', `"Thank you for confirming — I won't take any action on your card."`);
+  renderBadges();
+}
+
+async function doReset() {
+  await fetch(API + '/api/demo/reset', { method: 'POST' });
+  logLine('sys', 'Demo reset — all cards, cases, incidents, and audit log restored to initial state.');
+  document.getElementById('log').innerHTML = '';
+  activeCase = null;
+  callId = null;
+  incidentId = null;
+  sessionVerified = false;
+  sessionDisputed = false;
+  await loadScenarios();
+  renderBadges();
+}
+
+async function refreshScenarios() {
+  const res = await fetch(API + '/api/cases');
+  cases = await res.json();
+}
+
+function renderBadges() {
+  const el = document.getElementById('state-badges');
+  const caseData = cases.find(c => c.case_id === activeCase);
+  const badges = [
+    { label: 'VERIFIED', on: sessionVerified },
+    { label: 'PIN NEVER REQUESTED', on: true },
+    { label: 'DISPUTED', on: sessionDisputed },
+    { label: 'CARD FROZEN', on: caseData && caseData.card_status === 'FROZEN' },
+    { label: 'TRANSACTION BLOCKED', on: caseData && caseData.transaction_status === 'BLOCKED' },
+  ];
+  el.innerHTML = badges.map(b =>
+    `<span class="badge ${b.on ? 'on' : ''}">${b.label}</span>`
+  ).join('');
+}
+
+document.getElementById('btn-verify').onclick = doVerify;
+document.getElementById('btn-getcase').onclick = doGetCase;
+document.getElementById('btn-confirm-fraud').onclick = doConfirmFraud;
+document.getElementById('btn-dispute').onclick = doDispute;
+document.getElementById('btn-reset').onclick = doReset;
+
+loadScenarios();
+</script>
+
+</body>
+</html>
