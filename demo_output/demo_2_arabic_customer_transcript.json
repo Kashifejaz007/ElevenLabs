@@ -1,0 +1,74 @@
+[
+  {
+    "speaker": "TIMELINE",
+    "text": "FRAUD SIGNAL RECEIVED (bank's detection system)"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "INCIDENT CREATED — incident_id=INC-da172b95689d4c20 (case never exposed to agent)"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "OUTBOUND CALL INITIATED — call_id=f3cce7e5-6525-4e33-8eab-e3fa6acd5b3a"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "CUSTOMER ANSWERED"
+  },
+  {
+    "speaker": "AGENT (AR)",
+    "text": "مرحباً، هذا اتصال آلي من فريق حماية الاحتيال في بنكك. يتم تسجيل هذه المكالمة. رصدنا نشاطاً غير معتاد على بطاقتك — هل الوقت مناسب للمتابعة؟"
+  },
+  {
+    "speaker": "CUSTOMER (AR)",
+    "text": "نعم، تفضل."
+  },
+  {
+    "speaker": "AGENT (AR)",
+    "text": "شكراً. أرسلنا رمز تحقق مكوناً من 4 أرقام إلى رقمك المسجل — هل يمكنك قراءته لي؟ لن أطلب منك أبداً الرقم السري لبطاقتك."
+  },
+  {
+    "speaker": "CUSTOMER (AR)",
+    "text": "بالتأكيد، إنه 8823."
+  },
+  {
+    "speaker": "SYSTEM",
+    "text": "verify_customer -> {'ok': True}"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "VERIFICATION PASSED"
+  },
+  {
+    "speaker": "SYSTEM",
+    "text": "get_fraud_case -> {'ok': True, 'fraud_type': 'GEO_VELOCITY_MISMATCH', 'fraud_description': 'Two card transactions in different countries within a window too short for physical travel', 'masked_card': '**** 4192', 'transaction_amount': 612, 'transaction_currency': 'AED', 'transaction_merchant': 'DEMO MERCHANT TRAVEL', 'requires_dual_authorization': False, 'supported': True}"
+  },
+  {
+    "speaker": "AGENT (AR)",
+    "text": "رصدنا معاملة بقيمة 612 AED لدى DEMO MERCHANT TRAVEL في دولة مختلفة خلال فترة زمنية قصيرة جداً. هل قمت بهذه المعاملة؟"
+  },
+  {
+    "speaker": "CUSTOMER (AR)",
+    "text": "لا، لم أقم بهذه المعاملة."
+  },
+  {
+    "speaker": "SYSTEM",
+    "text": "confirm_fraud_and_freeze -> {'ok': True, 'already_frozen': False, 'card_status': 'FROZEN', 'transaction_status': 'BLOCKED'}"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "CARD FROZEN"
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "TRANSACTION BLOCKED"
+  },
+  {
+    "speaker": "AGENT (AR)",
+    "text": "شكراً لك — لقد قمت بتجميد بطاقتك وحظر هذه المعاملة. سيتم التواصل معك بخصوص بطاقة بديلة. شكراً لوقتك، مع السلامة."
+  },
+  {
+    "speaker": "TIMELINE",
+    "text": "AUDIT COMPLETE"
+  }
+]
