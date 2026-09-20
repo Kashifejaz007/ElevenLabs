@@ -108,12 +108,10 @@ Shows: all 7 ticked G components, arrow directions, personal-data boundary
 (filled dot), human-approval gate, dependency-down behaviour (`ok:false` →
 escalate, no auto-retry).
 
-**Two disclosed gaps, not papered over:**
-1. **Tool/privilege boundary isn't drawn as its own visual element** —
-   discovered during the Step 11 mapping audit, still unfixed.
-2. **Institution systems shown by category only** (fraud/transaction
-   monitoring, card-management, CRM, contact-centre/dialer, case-management)
-   — Sumeira Noman withheld exact vendor/system names as confidential.
+**One disclosed gap remains** (institution systems shown by category only —
+Sumeira Noman withheld exact vendor/system names as confidential). The
+tool/privilege boundary gap flagged at Step 11 was fixed at Step 19 — see
+below.
 
 ---
 ## I — Guardrails *(20 words per row · Guardrails 20%. Was docx-K.)*
@@ -190,7 +188,7 @@ nothing else in the canvas can compensate for it.
 | E | Complete |
 | F | Complete |
 | G | Complete, corrected against real component menu |
-| H | Diagram exists, 2 disclosed gaps (tool/privilege boundary not drawn; system names withheld as confidential) |
+| H | Diagram updated Step 19 — tool/privilege boundary now explicit. 1 disclosed gap remains (system names withheld as confidential) |
 | I | Complete — all 6 rows, opt-out path implemented Step 16 |
 | J | Drafted — targets are proposed, not measured |
 | K | Complete |
